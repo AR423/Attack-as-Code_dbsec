@@ -23,3 +23,6 @@ terraform.rc
 
 # Course submission files / references
 text/
+
+# Attack-stage local test output
+attack-stage/results/
