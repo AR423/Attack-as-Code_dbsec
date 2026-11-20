@@ -1,4 +1,12 @@
 terraform {
+  backend "s3" {
+    bucket         = "dbsec-tfstate-ar423"
+    key            = "weak/terraform.tfstate"
+    region         = "us-east-2"
+    use_lockfile   = true
+    encrypt        = true
+  }
+
   required_version = ">= 1.5"
   required_providers {
     aws = {
@@ -9,5 +17,5 @@ terraform {
 }
 
 provider "aws" {
-  region  = "us-east-2"
+  region = "us-east-2"
 }
