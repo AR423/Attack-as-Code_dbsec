@@ -55,6 +55,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y nmap hydra
+        
+      - name: Prepare results directory
+        run: mkdir -p attack-stage/results
 
       - name: Port/service scan
         run: ./attack-stage/port_scan.sh "${DB_ENDPOINT%%:*}"
@@ -65,11 +68,11 @@ jobs:
         continue-on-error: true
 
       - name: Snapshot exposure check
-        run: python3 attack-stage/snapshot_exposure_check.py dbsec-${{ env.CONFIG }}
+        run: python3 attack-stage/snapshot_exposure_check.py dbsec-weak | tee attack-stage/results/snapshot_exposure_result.txt
         continue-on-error: true
 
       - name: IAM permission abuse check
-        run: python3 attack-stage/iam_abuse_check.py dbsec-${{ env.CONFIG }}-rds-role
+        run: python3 attack-stage/iam_abuse_check.py dbsec-weak-rds-role | tee attack-stage/results/iam_abuse_result.txt
         continue-on-error: true
 
       - name: Upload attack-stage results
