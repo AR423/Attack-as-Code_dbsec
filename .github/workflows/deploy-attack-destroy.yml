@@ -1,0 +1,85 @@
+name: Deploy, Attack, Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: "Which config to deploy and attack"
+        required: true
+        type: choice
+        options:
+          - weak
+          - hardened
+
+jobs:
+  deploy-attack-destroy:
+    runs-on: ubuntu-latest
+    env:
+      CONFIG: ${{ github.event.inputs.config }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.1"
+
+      - name: Set DB password env var
+        run: |
+          if [ "$CONFIG" = "weak" ]; then
+            echo "TF_VAR_master_password=${{ secrets.WEAK_DB_PASSWORD }}" >> $GITHUB_ENV
+          else
+            echo "TF_VAR_master_password=${{ secrets.HARDENED_DB_PASSWORD }}" >> $GITHUB_ENV
+          fi
+
+      - name: Terraform Init
+        working-directory: terraform/${{ env.CONFIG }}
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: terraform/${{ env.CONFIG }}
+        run: terraform apply -auto-approve
+
+      - name: Get DB endpoint
+        working-directory: terraform/${{ env.CONFIG }}
+        run: echo "DB_ENDPOINT=$(terraform output -raw db_endpoint)" >> $GITHUB_ENV
+
+      - name: Install attack tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nmap hydra
+
+      - name: Port/service scan
+        run: ./attack-stage/port_scan.sh "${DB_ENDPOINT%%:*}"
+        continue-on-error: true
+
+      - name: Credential guessing
+        run: ./attack-stage/credential_guess.sh "${DB_ENDPOINT%%:*}" dbadmin
+        continue-on-error: true
+
+      - name: Snapshot exposure check
+        run: python3 attack-stage/snapshot_exposure_check.py dbsec-${{ env.CONFIG }}
+        continue-on-error: true
+
+      - name: IAM permission abuse check
+        run: python3 attack-stage/iam_abuse_check.py dbsec-${{ env.CONFIG }}-rds-role
+        continue-on-error: true
+
+      - name: Upload attack-stage results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: attack-results-${{ env.CONFIG }}
+          path: attack-stage/results/
+
+      - name: Terraform Destroy
+        if: always()
+        working-directory: terraform/${{ env.CONFIG }}
+        run: terraform destroy -auto-approve

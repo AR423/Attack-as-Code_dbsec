@@ -26,3 +26,6 @@ text/
 
 # Attack-stage local test output
 attack-stage/results/
+
+# OIDC approach blocked by SCP
+terraform/github-oidc/
