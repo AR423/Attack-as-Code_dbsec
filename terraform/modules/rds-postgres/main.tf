@@ -74,6 +74,7 @@ resource "aws_db_instance" "this" {
   storage_encrypted      = var.storage_encrypted
   skip_final_snapshot    = true
   monitoring_role_arn    = aws_iam_role.rds_role.arn
+  monitoring_interval    = 60
 
   tags = {
     Project = "attack-as-code"
