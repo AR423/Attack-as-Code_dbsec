@@ -35,11 +35,14 @@ def check_wildcard(policy_doc):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("role_name")
-    parser.add_argument("--profile", default="terraform-deployer")
+    parser.add_argument("--profile", default=None)
     parser.add_argument("--region", default="us-east-2")
     args = parser.parse_args()
 
-    session = boto3.Session(profile_name=args.profile, region_name=args.region)
+    session_kwargs = {"region_name": args.region}
+    if args.profile:
+        session_kwargs["profile_name"] = args.profile
+    session = boto3.Session(**session_kwargs)
     iam = session.client("iam")
 
     print(f"=== IAM Permission Abuse Check for role: {args.role_name} ===")
