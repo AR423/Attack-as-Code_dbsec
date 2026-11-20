@@ -62,7 +62,7 @@ resource "aws_iam_role_policy_attachment" "rds_role_policy" {
 resource "aws_db_instance" "this" {
   identifier             = var.identifier
   engine                 = "postgres"
-  engine_version         = "16.4"
+  engine_version         = "16.15"
   instance_class         = "db.t4g.micro"
   allocated_storage      = 20
   db_name                = "dbsecproject"
