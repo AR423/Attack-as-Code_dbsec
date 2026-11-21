@@ -32,11 +32,14 @@ jobs:
           terraform_version: "1.17.1"
 
       - name: Set DB password env var
+        env:
+          WEAK_PW: ${{ secrets.WEAK_DB_PASSWORD }}
+          HARDENED_PW: ${{ secrets.HARDENED_DB_PASSWORD }}
         run: |
           if [ "$CONFIG" = "weak" ]; then
-            echo "TF_VAR_master_password=${{ secrets.WEAK_DB_PASSWORD }}" >> $GITHUB_ENV
+            echo "TF_VAR_master_password=$WEAK_PW" >> "$GITHUB_ENV"
           else
-            echo "TF_VAR_master_password=${{ secrets.HARDENED_DB_PASSWORD }}" >> $GITHUB_ENV
+            echo "TF_VAR_master_password=$HARDENED_PW" >> "$GITHUB_ENV"
           fi
 
       - name: Terraform Init
