@@ -71,11 +71,11 @@ jobs:
         continue-on-error: true
 
       - name: Snapshot exposure check
-        run: python3 attack-stage/snapshot_exposure_check.py dbsec-weak | tee attack-stage/results/snapshot_exposure_result.txt
+        run: python3 attack-stage/snapshot_exposure_check.py dbsec-$CONFIG | tee attack-stage/results/snapshot_exposure_result.txt
         continue-on-error: true
 
       - name: IAM permission abuse check
-        run: python3 attack-stage/iam_abuse_check.py dbsec-weak-rds-role | tee attack-stage/results/iam_abuse_result.txt
+        run: python3 attack-stage/iam_abuse_check.py dbsec-$CONFIG-rds-role | tee attack-stage/results/iam_abuse_result.txt
         continue-on-error: true
 
       - name: Upload attack-stage results
